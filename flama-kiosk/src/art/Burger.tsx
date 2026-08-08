@@ -2,10 +2,11 @@ import { useId } from "react";
 import { scallopEdge, dripEdge, domePath, crinkleStrip } from "./shapes";
 
 interface BurgerProps {
-  patty: "beef" | "chicken" | "veggie";
+  patty: "beef" | "chicken" | "veggie" | "fish";
   cheese: boolean;
   bacon: boolean;
   bunTop: "sesame" | "plain";
+  double?: boolean;
   className?: string;
 }
 
@@ -13,12 +14,14 @@ const PATTY_COLORS: Record<BurgerProps["patty"], { main: string; dark: string; e
   beef: { main: "#6B3A22", dark: "#4A2415", edge: "#301207", fleck: "#2A140A" },
   chicken: { main: "#E3B45C", dark: "#C4934A", edge: "#A97530", fleck: "#B98A3E" },
   veggie: { main: "#8B9A54", dark: "#6C7A3D", edge: "#4F5C2E", fleck: "#D9B94A" },
+  fish: { main: "#F0CD6E", dark: "#D8A83C", edge: "#B27F1E", fleck: "#E8DDBE" },
 };
 
-export default function Burger({ patty, cheese, bacon, bunTop, className }: BurgerProps) {
+export default function Burger({ patty, cheese, bacon, bunTop, double: isDouble, className }: BurgerProps) {
   const uid = useId().replace(/[:]/g, "");
   const cx = 120;
   const pc = PATTY_COLORS[patty];
+  const stackShift = isDouble ? 28 : 0;
 
   const bottomBunTop = domePath(cx, 178, 62, 24, 0.45);
   const lettuceD =
@@ -31,26 +34,30 @@ export default function Burger({ patty, cheese, bacon, bunTop, className }: Burg
   const pattyRight = cx + 68;
   const pattyTop = 114;
   const pattyBottom = 134;
-  const pattyD = `M ${pattyLeft} ${pattyBottom}
-    Q ${pattyLeft - 4} ${(pattyTop + pattyBottom) / 2} ${pattyLeft} ${pattyTop}
-    L ${pattyRight} ${pattyTop}
-    Q ${pattyRight + 4} ${(pattyTop + pattyBottom) / 2} ${pattyRight} ${pattyBottom}
+  const buildPattyD = (top: number, bottom: number) => `M ${pattyLeft} ${bottom}
+    Q ${pattyLeft - 4} ${(top + bottom) / 2} ${pattyLeft} ${top}
+    L ${pattyRight} ${top}
+    Q ${pattyRight + 4} ${(top + bottom) / 2} ${pattyRight} ${bottom}
     Z`;
+  const pattyD = buildPattyD(pattyTop, pattyBottom);
+  const pattyD2 = buildPattyD(pattyTop - stackShift, pattyBottom - stackShift);
 
   const cheeseLeft = cx - 62;
   const cheeseRight = cx + 62;
   const cheeseTop = 104;
   const cheeseBase = 116;
-  const cheeseD =
-    `M ${cheeseLeft} ${cheeseTop} L ${cheeseRight} ${cheeseTop} L ${cheeseRight} ${cheeseBase}` +
-    dripEdge(cheeseRight, cheeseLeft, cheeseBase, 5, 13) +
+  const buildCheeseD = (top: number, base: number) =>
+    `M ${cheeseLeft} ${top} L ${cheeseRight} ${top} L ${cheeseRight} ${base}` +
+    dripEdge(cheeseRight, cheeseLeft, base, 5, 13) +
     ` Z`;
+  const cheeseD = buildCheeseD(cheeseTop, cheeseBase);
+  const cheeseD2 = buildCheeseD(cheeseTop - stackShift, cheeseBase - stackShift);
 
   const baconLeftD = crinkleStrip(pattyLeft - 16, cheeseLeft + 12, 108, 122, 3, 3.4);
   const baconRightD = crinkleStrip(cheeseRight - 12, pattyRight + 16, 111, 124, 3, 3.4);
 
   const topBunHeight = 50;
-  const topBunBase = 104;
+  const topBunBase = 104 - stackShift;
   const topBunD = domePath(cx, topBunBase, 64, topBunHeight, 0.22);
 
   const seeds = bunTop === "sesame"
@@ -132,7 +139,34 @@ export default function Burger({ patty, cheese, bacon, bunTop, className }: Burg
 
         {cheese && <path d={cheeseD} fill={`url(#ch-${uid})`} stroke="#D89A2C" strokeWidth={1} />}
 
-        {bacon && (
+        {isDouble && (
+          <>
+            <path d={pattyD2} fill={`url(#pt-${uid})`} stroke={pc.edge} strokeWidth={1.4} />
+            {patty === "beef" &&
+              [-40, -18, 4, 26, 44].map((dx, i) => (
+                <line
+                  key={i}
+                  x1={cx + dx}
+                  y1={pattyTop - stackShift + 4}
+                  x2={cx + dx + 10}
+                  y2={pattyBottom - stackShift - 4}
+                  stroke={pc.fleck}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  opacity={0.55}
+                />
+              ))}
+            {patty !== "beef" &&
+              Array.from({ length: 10 }).map((_, i) => {
+                const fx = pattyLeft + 8 + ((i * 53) % (pattyRight - pattyLeft - 16));
+                const fy = pattyTop - stackShift + 5 + ((i * 29) % (pattyBottom - pattyTop - 10));
+                return <circle key={i} cx={fx} cy={fy} r={1.4} fill={pc.fleck} opacity={0.7} />;
+              })}
+            {cheese && <path d={cheeseD2} fill={`url(#ch-${uid})`} stroke="#D89A2C" strokeWidth={1} />}
+          </>
+        )}
+
+        {bacon && !isDouble && (
           <>
             <path d={baconLeftD} fill={`url(#bc-${uid})`} stroke="#6E2718" strokeWidth={1} />
             <path d={baconRightD} fill={`url(#bc-${uid})`} stroke="#6E2718" strokeWidth={1} />
@@ -142,7 +176,7 @@ export default function Burger({ patty, cheese, bacon, bunTop, className }: Burg
         )}
 
         <path
-          d={`M ${cx - 60} 106 Q ${cx - 30} 118 ${cx - 4} 108`}
+          d={`M ${cx - 60} ${106 - stackShift} Q ${cx - 30} ${118 - stackShift} ${cx - 4} ${108 - stackShift}`}
           fill="none"
           stroke="#F6EBD2"
           strokeWidth={5}

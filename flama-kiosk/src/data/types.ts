@@ -37,13 +37,24 @@ export interface SauceOption {
 }
 
 export type ArtSpec =
-  | { kind: "burger"; patty: "beef" | "chicken" | "veggie"; cheese: boolean; bacon: boolean; bunTop: "sesame" | "plain" }
+  | {
+      kind: "burger";
+      patty: "beef" | "chicken" | "veggie" | "fish";
+      cheese: boolean;
+      bacon: boolean;
+      bunTop: "sesame" | "plain";
+      double?: boolean;
+    }
   | { kind: "fries" }
   | { kind: "nuggets" }
   | { kind: "drink" }
   | { kind: "sundae" }
   | { kind: "pie" }
-  | { kind: "wrap" };
+  | { kind: "wrap" }
+  | { kind: "cheesebites" }
+  | { kind: "hashbrown" }
+  | { kind: "hotdrink" }
+  | { kind: "pastry" };
 
 export interface CartLineConfig {
   isMenu: boolean;
