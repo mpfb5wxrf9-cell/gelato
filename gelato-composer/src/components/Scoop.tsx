@@ -22,7 +22,7 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
   const { cx, cy, rx, ry } = geometry;
   const rand = useMemo(() => seededRandom(seed), [seed]);
   const path = useMemo(
-    () => scoopPath(cx, cy, rx, ry, rand, 0.07),
+    () => scoopPath(cx, cy, rx, ry, rand),
     [cx, cy, rx, ry, rand]
   );
   const gradId = `scoop-grad-${seed}`;

@@ -15,11 +15,19 @@ interface GelatoStageProps {
 
 const RIM_Y = 430;
 
+const BASE_RX = 92;
+const BASE_RY = BASE_RX * 0.86;
+
 function scoopGeometry(index: number, total: number, baseId: string, flavorId: string) {
   const rand = seededRandom(`${flavorId}-${index}-${total}-${baseId}`);
   const rx = 92 - index * 13;
-  const ry = 58 - index * 4;
-  const cy = RIM_Y - 20 - index * 68;
+  const ry = rx * 0.86;
+  // A coppetta has tapered walls below the rim: keep the whole stack
+  // mounded above/at the rim so the round scoops don't poke through the
+  // narrower cup sides lower down. A cone has no enclosing walls, so the
+  // scoop can sit lower, bulging naturally over the rim.
+  const restOffset = baseId === "coppetta" ? BASE_RY - 14 : 20;
+  const cy = RIM_Y - restOffset - index * 93;
   const jitter = (rand() - 0.5) * 14;
   const cx = 200 + jitter;
   return { cx, cy, rx, ry };
@@ -35,7 +43,7 @@ export default function GelatoStage({ baseId, flavors, decorations, glaze, extra
     cx: 200,
     cy: RIM_Y - 40,
     rx: 80,
-    ry: 50,
+    ry: 69,
   };
 
   const seedKey = `${baseId}|${flavors.map((f) => f.id).join(",")}`;

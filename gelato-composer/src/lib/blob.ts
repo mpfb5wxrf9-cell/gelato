@@ -51,33 +51,36 @@ export function blobPath(
   return smoothClosedPath(blobPoints(cx, cy, rx, ry, rand, n, jitter));
 }
 
-// Normalized silhouette of a hand-scooped gelato "quenelle": a wide,
-// gently flattened resting base with an off-center peak/swirl left by the
-// scoop, rather than a generic organic blob.
-const QUENELLE_TEMPLATE: Point[] = [
-  [1.0, 0.0],
-  [0.82, 0.42],
-  [0.55, 0.63],
-  [0.0, 0.58],
-  [-0.58, 0.63],
-  [-1.0, 0.06],
-  [-0.64, -0.55],
-  [-0.12, -1.16],
-  [0.62, -0.68],
-];
-
+// A round scoop of gelato: a clean, near-circular silhouette with two or
+// three soft, uneven melt bumps concentrated right at the base (bottom of
+// the circle), like a real scoop pressed down and slightly overflowing
+// onto the cone — not a jagged blob all around.
 export function scoopPath(
   cx: number,
   cy: number,
   rx: number,
   ry: number,
   rand: () => number,
-  jitter = 0.07
+  jitter = 0.01
 ): string {
-  const lean = rand() > 0.5 ? 1 : -1;
-  const pts: Point[] = QUENELLE_TEMPLATE.map(([fx, fy]) => {
-    const j = 1 + (rand() - 0.5) * 2 * jitter;
-    return [cx + fx * lean * rx * j, cy + fy * ry * j];
-  });
+  const n = 26;
+  const bumpCount = 2 + Math.floor(rand() * 2);
+  const bumps = Array.from({ length: bumpCount }, () => ({
+    angle: Math.PI / 2 + (rand() - 0.5) * 1.1,
+    amp: 0.1 + rand() * 0.2,
+    spread: 0.3 + rand() * 0.22,
+  }));
+
+  const pts: Point[] = [];
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2;
+    let r = 1 + (rand() - 0.5) * 2 * jitter;
+    for (const b of bumps) {
+      let d = Math.abs(angle - b.angle);
+      d = Math.min(d, Math.PI * 2 - d);
+      r += b.amp * Math.exp(-(d * d) / (2 * b.spread * b.spread));
+    }
+    pts.push([cx + Math.cos(angle) * rx * r, cy + Math.sin(angle) * ry * r]);
+  }
   return smoothClosedPath(pts);
 }

@@ -102,10 +102,7 @@ export default function GelatoBase({ baseId, rimY }: GelatoBaseProps) {
   const leftRim = CENTER_X - RIM_HALF_WIDTH;
   const rightRim = CENTER_X + RIM_HALF_WIDTH;
 
-  const conePath = `M ${apexX} ${apexY}
-    Q ${leftRim - 6} ${apexY - 90} ${leftRim} ${rimY}
-    L ${rightRim} ${rimY}
-    Q ${rightRim + 6} ${apexY - 90} ${apexX} ${apexY} Z`;
+  const conePath = `M ${apexX} ${apexY} L ${leftRim} ${rimY} L ${rightRim} ${rimY} Z`;
 
   const hatchLines = [];
   const step = 16;
