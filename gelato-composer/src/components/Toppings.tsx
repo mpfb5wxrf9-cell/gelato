@@ -2,6 +2,7 @@ import { useMemo, type ReactElement } from "react";
 import type { Decoration, Extra, Glaze } from "../data/options";
 import { blobPath } from "../lib/blob";
 import { seededRandom } from "../lib/rng";
+import { darken, lighten } from "../lib/color";
 
 interface Geometry {
   cx: number;
@@ -38,31 +39,36 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
       };
 
       if (dec.id === "zuccherini") {
-        scatter(24, (x, y, r, i) => (
-          <rect
-            key={i}
-            x={-3}
-            y={-1.2}
-            width={6}
-            height={2.4}
-            rx={1.2}
-            fill={SPRINKLE_COLORS[Math.floor(r() * SPRINKLE_COLORS.length)]}
-            transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(r() * 360).toFixed(0)})`}
-          />
-        ));
+        scatter(24, (x, y, r, i) => {
+          const c = SPRINKLE_COLORS[Math.floor(r() * SPRINKLE_COLORS.length)];
+          const rot = (r() * 360).toFixed(0);
+          return (
+            <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot})`}>
+              <rect x={-3} y={-1.2} width={6} height={2.4} rx={1.2} fill={darken(c, 0.12)} />
+              <rect x={-3} y={-1.5} width={6} height={1.3} rx={0.8} fill={lighten(c, 0.35)} opacity={0.75} />
+            </g>
+          );
+        });
       } else if (dec.id === "nocciole") {
-        scatter(16, (x, y, r, i) => (
-          <circle key={i} cx={x} cy={y} r={2.2 + r() * 1.8} fill="#8A6540" stroke="#5C4326" strokeWidth={0.6} />
-        ));
+        scatter(16, (x, y, r, i) => {
+          const rad = 2.2 + r() * 1.8;
+          return (
+            <g key={i}>
+              <circle cx={x} cy={y} r={rad} fill="#8A6540" stroke="#5C4326" strokeWidth={0.6} />
+              <circle cx={x - rad * 0.35} cy={y - rad * 0.35} r={rad * 0.4} fill="#C9A578" opacity={0.65} />
+            </g>
+          );
+        });
       } else if (dec.id === "scaglie") {
-        scatter(14, (x, y, r, i) => (
-          <polygon
-            key={i}
-            points="-4,3 4,3 0,-4"
-            fill="#3B241A"
-            transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(r() * 360).toFixed(0)})`}
-          />
-        ));
+        scatter(14, (x, y, r, i) => {
+          const rot = (r() * 360).toFixed(0);
+          return (
+            <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot})`}>
+              <path d="M -4.5 3 Q -1 -5 4.5 3 Q 0 1.4 -4.5 3 Z" fill="#3B241A" />
+              <path d="M -3 2 Q -1 -2.5 2.4 1.6" fill="none" stroke="#6B4A34" strokeWidth={0.7} opacity={0.7} />
+            </g>
+          );
+        });
       } else if (dec.id === "cocco-rape") {
         scatter(18, (x, y, r, i) => (
           <path
@@ -102,13 +108,34 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
       const x = cx - rx * 0.82 + rx * 1.64 * t;
       const len = 14 + rand() * 22;
       const dripPath = `M ${x - 5} ${waveY} Q ${x - 6} ${waveY + len * 0.6} ${x} ${waveY + len} Q ${x + 6} ${waveY + len * 0.6} ${x + 5} ${waveY} Z`;
-      drips.push(<path key={i} d={dripPath} fill={glaze.color} />);
+      drips.push(
+        <g key={i}>
+          <path d={dripPath} fill={glaze.color} />
+          <path
+            d={`M ${x - 2.6} ${waveY + 3} Q ${x - 3} ${waveY + len * 0.4} ${x - 0.8} ${waveY + len * 0.62}`}
+            fill="none"
+            stroke={lighten(glaze.color, 0.4)}
+            strokeWidth={1.1}
+            strokeLinecap="round"
+            opacity={0.55}
+          />
+        </g>
+      );
     }
     return (
       <g className="topping-enter">
         {drips}
-        <path d={d} fill="none" stroke={glaze.color} strokeWidth={9} strokeLinecap="round" />
-        <path d={d} fill="none" stroke={glaze.colorDark} strokeWidth={2} strokeOpacity={0.4} strokeLinecap="round" />
+        <path d={d} fill="none" stroke={glaze.colorDark} strokeWidth={10} strokeLinecap="round" opacity={0.9} />
+        <path d={d} fill="none" stroke={glaze.color} strokeWidth={8} strokeLinecap="round" />
+        <path
+          d={d}
+          fill="none"
+          stroke={lighten(glaze.color, 0.45)}
+          strokeWidth={2}
+          strokeOpacity={0.5}
+          strokeLinecap="round"
+          transform="translate(0, -1.6)"
+        />
       </g>
     );
   }, [glaze, seedBase, cx, cy, rx, ry]);
@@ -122,23 +149,32 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
 
   const pannaLayer = hasPanna ? (
     <g className="topping-enter">
-      <path
-        d={blobPath(cx, pannaTopY + 14, 34, 22, rand, 9, 0.08)}
-        fill="#FFFDF8"
-        stroke="#E9E0CC"
-        strokeWidth={1.2}
+      <defs>
+        <radialGradient id="panna-grad" cx="32%" cy="26%" r="80%">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="55%" stopColor="#FFFCF4" />
+          <stop offset="100%" stopColor="#E9DFC7" />
+        </radialGradient>
+      </defs>
+      <ellipse
+        cx={cx}
+        cy={pannaTopY + 30}
+        rx={30}
+        ry={10}
+        fill="#2A1B10"
+        opacity={0.16}
+        filter="url(#f-contact-blur)"
       />
+      <path d={blobPath(cx, pannaTopY + 14, 34, 22, rand, 9, 0.08)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={1} strokeOpacity={0.5} />
+      <path d={blobPath(cx - 2, pannaTopY - 8, 24, 17, rand, 9, 0.09)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={0.8} strokeOpacity={0.5} />
+      <path d={blobPath(cx + 1, pannaTopY - 24, 14, 11, rand, 8, 0.1)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={0.6} strokeOpacity={0.5} />
       <path
-        d={blobPath(cx - 2, pannaTopY - 8, 24, 17, rand, 9, 0.09)}
-        fill="#FFFEFB"
-        stroke="#EDE4D0"
-        strokeWidth={1}
-      />
-      <path
-        d={blobPath(cx + 1, pannaTopY - 24, 14, 11, rand, 8, 0.1)}
-        fill="#FFFFFC"
-        stroke="#EDE4D0"
-        strokeWidth={0.8}
+        d={`M ${cx - 10} ${pannaTopY - 24} Q ${cx} ${pannaTopY - 30} ${cx + 8} ${pannaTopY - 22}`}
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+        opacity={0.75}
       />
     </g>
   ) : null;
@@ -147,9 +183,17 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
 
   const amarenaLayer = hasAmarena ? (
     <g className="topping-enter">
+      <defs>
+        <radialGradient id="amarena-grad" cx="34%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#D8546A" />
+          <stop offset="45%" stopColor="#9A1F34" />
+          <stop offset="100%" stopColor="#5E0F1D" />
+        </radialGradient>
+      </defs>
       <path d={`M ${cx} ${capTopY} Q ${cx + 6} ${capTopY - 12} ${cx + 10} ${capTopY - 18}`} stroke="#5C6B3B" strokeWidth={2} fill="none" strokeLinecap="round" />
-      <circle cx={cx} cy={capTopY + 6} r={8} fill="#8E1B2E" stroke="#5E0F1D" strokeWidth={1.2} />
-      <circle cx={cx - 2.5} cy={capTopY + 3} r={2.4} fill="#C24559" opacity={0.7} />
+      <ellipse cx={cx} cy={capTopY + 9.5} rx={7} ry={3} fill="#2A1B10" opacity={0.22} filter="url(#f-contact-blur)" />
+      <circle cx={cx} cy={capTopY + 6} r={8} fill="url(#amarena-grad)" stroke="#4A0C16" strokeWidth={0.8} />
+      <circle cx={cx - 2.6} cy={capTopY + 2.8} r={2.1} fill="#FFDDE3" opacity={0.75} />
     </g>
   ) : null;
 

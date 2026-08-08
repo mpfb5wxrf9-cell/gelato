@@ -71,13 +71,28 @@ export default function GelatoStage({ baseId, flavors, decorations, glaze, extra
         role="img"
         aria-label="Anteprima del gelato composto"
       >
+        <defs>
+          <filter id="f-ground-blur" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="9" />
+          </filter>
+          <filter id="f-contact-blur" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4.2" />
+          </filter>
+          <filter id="f-gloss-blur" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+          <filter id="f-grain" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="n" />
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0" />
+          </filter>
+        </defs>
         <g
           className="stage-frame"
           style={{
             transform: `translate(${frame.translateX}px, ${frame.translateY}px) scale(${frame.scale})`,
           }}
         >
-          <ellipse cx={200} cy={585} rx={118} ry={16} fill="#2A1B10" opacity={0.14} />
+          <ellipse cx={200} cy={588} rx={104} ry={13} fill="#2A1B10" opacity={0.22} filter="url(#f-ground-blur)" />
           <GelatoBase baseId={baseId} rimY={RIM_Y} />
           {flavors.map((flavor, i) => (
             <Scoop

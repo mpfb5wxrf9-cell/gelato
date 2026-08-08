@@ -2,6 +2,7 @@ import { useMemo, type ReactElement } from "react";
 import type { Flavor } from "../data/options";
 import { blobPath } from "../lib/blob";
 import { seededRandom } from "../lib/rng";
+import { darken } from "../lib/color";
 
 interface ScoopGeometry {
   cx: number;
@@ -26,6 +27,21 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
   );
   const gradId = `scoop-grad-${seed}`;
   const clipId = `scoop-clip-${seed}`;
+  const deepShade = useMemo(() => darken(flavor.shade, 0.32), [flavor.shade]);
+
+  const glossPath = useMemo(
+    () =>
+      blobPath(
+        cx - rx * 0.28,
+        cy - ry * 0.42,
+        rx * 0.34,
+        ry * 0.24,
+        seededRandom(seed + "-gloss"),
+        7,
+        0.18
+      ),
+    [cx, cy, rx, ry, seed]
+  );
 
   const texture = useMemo(() => {
     const items: ReactElement[] = [];
@@ -116,17 +132,46 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
       style={{ animationDelay: `${delay}ms`, transformOrigin: `${cx}px ${cy + ry * 0.6}px` }}
     >
       <defs>
-        <radialGradient id={gradId} cx="35%" cy="28%" r="75%">
+        <radialGradient id={gradId} cx="33%" cy="24%" r="80%">
           <stop offset="0%" stopColor={flavor.highlight} />
-          <stop offset="55%" stopColor={flavor.main} />
-          <stop offset="100%" stopColor={flavor.shade} />
+          <stop offset="30%" stopColor={flavor.main} />
+          <stop offset="72%" stopColor={flavor.shade} />
+          <stop offset="100%" stopColor={deepShade} />
         </radialGradient>
         <clipPath id={clipId}>
           <path d={path} />
         </clipPath>
       </defs>
-      <path d={path} fill={`url(#${gradId})`} stroke={flavor.shade} strokeWidth={1.5} />
-      <g clipPath={`url(#${clipId})`}>{texture}</g>
+      <ellipse
+        cx={cx}
+        cy={cy + ry * 0.78}
+        rx={rx * 0.72}
+        ry={ry * 0.3}
+        fill="#2A1B10"
+        opacity={0.28}
+        filter="url(#f-contact-blur)"
+      />
+      <path d={path} fill={`url(#${gradId})`} stroke={deepShade} strokeWidth={1} strokeOpacity={0.55} />
+      <g clipPath={`url(#${clipId})`}>
+        {texture}
+        <path
+          d={glossPath}
+          fill="#ffffff"
+          opacity={0.4}
+          filter="url(#f-gloss-blur)"
+          style={{ mixBlendMode: "screen" }}
+        />
+        <rect
+          x={cx - rx}
+          y={cy - ry}
+          width={rx * 2}
+          height={ry * 2}
+          fill="#3a2410"
+          filter="url(#f-grain)"
+          opacity={0.1}
+          style={{ mixBlendMode: "multiply" }}
+        />
+      </g>
     </g>
   );
 }
