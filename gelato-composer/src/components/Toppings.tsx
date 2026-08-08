@@ -68,9 +68,21 @@ const DECORATION_BUILDERS: Record<string, { baseCount: number; build: (r: () => 
 const LEVEL_FACTORS = [1, 0.45, 0.2];
 
 export default function Toppings({ geometries, decorations, glaze, extras, seedBase }: ToppingsProps) {
-  const topGeometry = geometries[geometries.length - 1];
-  const { cx, cy, rx, ry } = topGeometry;
-  const levels = useMemo(() => [...geometries].reverse().slice(0, 3), [geometries]);
+  // Sort by top edge (ascending) so "levels" always run highest-scoop
+  // first regardless of how the cluster is arranged left-to-right.
+  const levels = useMemo(
+    () => [...geometries].sort((a, b) => a.cy - a.ry - (b.cy - b.ry)).slice(0, 3),
+    [geometries]
+  );
+  const topMost = levels[0];
+  // Extras (cream, cherry, wafer) should sit centered above the whole
+  // cluster, not offset toward whichever scoop happens to be highest.
+  const anchorCx = useMemo(
+    () => geometries.reduce((s, g) => s + g.cx, 0) / geometries.length,
+    [geometries]
+  );
+  const cx = anchorCx;
+  const { cy, rx, ry } = topMost;
 
   const decorationLayers = useMemo(() => {
     return decorations.map((dec) => {

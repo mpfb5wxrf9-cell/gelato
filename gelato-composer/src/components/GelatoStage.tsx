@@ -15,21 +15,41 @@ interface GelatoStageProps {
 
 const RIM_Y = 430;
 
-const BASE_RX = 92;
+const BASE_RX = 82;
 const BASE_RY = BASE_RX * 0.86;
+
+// Real scooped cones don't stack scoops in a straight tower — they sit as
+// a cluster resting on (and slightly overlapping) the rim: the first two
+// scoops side by side up front, a third nestled higher and further back
+// between them. [dx, dy, scale] per position, in selection order.
+const CLUSTER_LAYOUTS: Record<number, [number, number, number][]> = {
+  1: [[0, 0, 1.05]],
+  2: [
+    [-34, 10, 0.94],
+    [34, 4, 0.94],
+  ],
+  3: [
+    [-40, 22, 0.87],
+    [37, 15, 0.89],
+    [1, -28, 0.84],
+  ],
+};
 
 function scoopGeometry(index: number, total: number, baseId: string, flavorId: string) {
   const rand = seededRandom(`${flavorId}-${index}-${total}-${baseId}`);
-  const rx = 92 - index * 13;
+  const layout = CLUSTER_LAYOUTS[total] ?? CLUSTER_LAYOUTS[3];
+  const [dx, dy, scale] = layout[index] ?? layout[layout.length - 1];
+  const rx = BASE_RX * scale;
   const ry = rx * 0.86;
-  // A coppetta has tapered walls below the rim: keep the whole stack
-  // mounded above/at the rim so the round scoops don't poke through the
-  // narrower cup sides lower down. A cone has no enclosing walls, so the
-  // scoop can sit lower, bulging naturally over the rim.
-  const restOffset = baseId === "coppetta" ? BASE_RY - 14 : 20;
-  const cy = RIM_Y - restOffset - index * 93;
-  const jitter = (rand() - 0.5) * 14;
-  const cx = 200 + jitter;
+  // A coppetta has tapered walls below the rim: keep the cluster mounded
+  // above/at the rim so the round scoops don't poke through the narrower
+  // cup sides lower down. A cone has no enclosing walls, so the cluster
+  // can sit lower, resting naturally into the rim.
+  const y0 = baseId === "coppetta" ? RIM_Y - BASE_RY + 4 : RIM_Y - 6;
+  const jx = (rand() - 0.5) * 10;
+  const jy = (rand() - 0.5) * 8;
+  const cx = 200 + dx + jx;
+  const cy = y0 + dy + jy;
   return { cx, cy, rx, ry };
 }
 
@@ -39,12 +59,13 @@ export default function GelatoStage({ baseId, flavors, decorations, glaze, extra
     [flavors, baseId]
   );
 
-  const topGeometry = geometries[geometries.length - 1] ?? {
-    cx: 200,
-    cy: RIM_Y - 40,
-    rx: 80,
-    ry: 69,
-  };
+  const highestTop = useMemo(
+    () =>
+      geometries.length > 0
+        ? Math.min(...geometries.map((g) => g.cy - g.ry))
+        : RIM_Y - 92,
+    [geometries]
+  );
 
   const seedKey = `${baseId}|${flavors.map((f) => f.id).join(",")}`;
 
@@ -58,8 +79,7 @@ export default function GelatoStage({ baseId, flavors, decorations, glaze, extra
     if (hasPanna) topBuffer = Math.max(topBuffer, 98);
     if (hasAmarena) topBuffer = Math.max(topBuffer, hasPanna ? 132 : 74);
 
-    const contentTop =
-      flavors.length > 0 ? topGeometry.cy - topGeometry.ry - topBuffer : RIM_Y - 92;
+    const contentTop = highestTop - topBuffer;
     const contentBottom = baseId === "coppetta" ? RIM_Y + 118 + 24 : RIM_Y + 168 + 28;
 
     const targetTop = 34;
@@ -69,7 +89,7 @@ export default function GelatoStage({ baseId, flavors, decorations, glaze, extra
     const translateY = targetTop - contentTop * scale;
     const translateX = 200 * (1 - scale);
     return { scale, translateX, translateY };
-  }, [flavors.length, topGeometry, glaze, extras, baseId]);
+  }, [highestTop, glaze, extras, baseId]);
 
   return (
     <div className="stage-wrap">
