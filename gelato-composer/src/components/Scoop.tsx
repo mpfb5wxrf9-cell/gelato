@@ -1,6 +1,6 @@
 import { useMemo, type ReactElement } from "react";
 import type { Flavor } from "../data/options";
-import { blobPath } from "../lib/blob";
+import { blobPath, scoopPath } from "../lib/blob";
 import { hashSeed, seededRandom } from "../lib/rng";
 import { darken, lighten } from "../lib/color";
 
@@ -22,7 +22,7 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
   const { cx, cy, rx, ry } = geometry;
   const rand = useMemo(() => seededRandom(seed), [seed]);
   const path = useMemo(
-    () => blobPath(cx, cy, rx, ry, rand, 11, 0.1),
+    () => scoopPath(cx, cy, rx, ry, rand, 0.07),
     [cx, cy, rx, ry, rand]
   );
   const gradId = `scoop-grad-${seed}`;

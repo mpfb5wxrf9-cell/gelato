@@ -28,66 +28,58 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
     return decorations.map((dec) => {
       const rand = seededRandom(seedBase + "-dec-" + dec.id);
       const items: ReactElement[] = [];
-      const scatter = (count: number, build: (x: number, y: number, r: () => number, i: number) => ReactElement) => {
+      const scatter = (count: number, build: (r: () => number, i: number) => ReactElement) => {
         for (let i = 0; i < count; i++) {
           const angle = rand() * Math.PI * 2;
           const dist = 0.15 + rand() * 0.62;
           const x = cx + Math.cos(angle) * rx * dist;
           const y = cy - ry * 0.25 + Math.sin(angle) * ry * dist * 0.7;
-          items.push(build(x, y, rand, i));
+          const rot = (rand() * 360).toFixed(0);
+          const delay = (rand() * 260).toFixed(0);
+          items.push(
+            <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot})`}>
+              <g className="sprinkle-pop" style={{ animationDelay: `${delay}ms` }}>
+                {build(rand, i)}
+              </g>
+            </g>
+          );
         }
       };
 
       if (dec.id === "zuccherini") {
-        scatter(24, (x, y, r, i) => {
+        scatter(24, (r) => {
           const c = SPRINKLE_COLORS[Math.floor(r() * SPRINKLE_COLORS.length)];
-          const rot = (r() * 360).toFixed(0);
           return (
-            <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot})`}>
+            <>
               <rect x={-3} y={-1.2} width={6} height={2.4} rx={1.2} fill={darken(c, 0.12)} />
               <rect x={-3} y={-1.5} width={6} height={1.3} rx={0.8} fill={lighten(c, 0.35)} opacity={0.75} />
-            </g>
+            </>
           );
         });
       } else if (dec.id === "nocciole") {
-        scatter(16, (x, y, r, i) => {
+        scatter(16, (r) => {
           const rad = 2.2 + r() * 1.8;
           return (
-            <g key={i}>
-              <circle cx={x} cy={y} r={rad} fill="#8A6540" stroke="#5C4326" strokeWidth={0.6} />
-              <circle cx={x - rad * 0.35} cy={y - rad * 0.35} r={rad * 0.4} fill="#C9A578" opacity={0.65} />
-            </g>
+            <>
+              <circle cx={0} cy={0} r={rad} fill="#8A6540" stroke="#5C4326" strokeWidth={0.6} />
+              <circle cx={-rad * 0.35} cy={-rad * 0.35} r={rad * 0.4} fill="#C9A578" opacity={0.65} />
+            </>
           );
         });
       } else if (dec.id === "scaglie") {
-        scatter(14, (x, y, r, i) => {
-          const rot = (r() * 360).toFixed(0);
-          return (
-            <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot})`}>
-              <path d="M -4.5 3 Q -1 -5 4.5 3 Q 0 1.4 -4.5 3 Z" fill="#3B241A" />
-              <path d="M -3 2 Q -1 -2.5 2.4 1.6" fill="none" stroke="#6B4A34" strokeWidth={0.7} opacity={0.7} />
-            </g>
-          );
-        });
+        scatter(14, () => (
+          <>
+            <path d="M -4.5 3 Q -1 -5 4.5 3 Q 0 1.4 -4.5 3 Z" fill="#3B241A" />
+            <path d="M -3 2 Q -1 -2.5 2.4 1.6" fill="none" stroke="#6B4A34" strokeWidth={0.7} opacity={0.7} />
+          </>
+        ));
       } else if (dec.id === "cocco-rape") {
-        scatter(18, (x, y, r, i) => (
-          <path
-            key={i}
-            d="M -4 0 Q 0 -3.5 4 0"
-            stroke="#F8F4E8"
-            strokeWidth={1.6}
-            fill="none"
-            strokeLinecap="round"
-            transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(r() * 360).toFixed(0)})`}
-          />
+        scatter(18, () => (
+          <path d="M -4 0 Q 0 -3.5 4 0" stroke="#F8F4E8" strokeWidth={1.6} fill="none" strokeLinecap="round" />
         ));
       }
 
-      return (
-        <g key={dec.id} className="topping-enter">
-          {items}
-        </g>
-      );
+      return <g key={dec.id}>{items}</g>;
     });
   }, [decorations, seedBase, cx, cy, rx, ry]);
 
@@ -109,7 +101,7 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
       const len = 14 + rand() * 22;
       const dripPath = `M ${x - 5} ${waveY} Q ${x - 6} ${waveY + len * 0.6} ${x} ${waveY + len} Q ${x + 6} ${waveY + len * 0.6} ${x + 5} ${waveY} Z`;
       drips.push(
-        <g key={i}>
+        <g key={i} className="drip-form" style={{ animationDelay: `${520 + i * 90}ms` }}>
           <path d={dripPath} fill={glaze.color} />
           <path
             d={`M ${x - 2.6} ${waveY + 3} Q ${x - 3} ${waveY + len * 0.4} ${x - 0.8} ${waveY + len * 0.62}`}
@@ -123,19 +115,40 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
       );
     }
     return (
-      <g className="topping-enter">
-        {drips}
-        <path d={d} fill="none" stroke={glaze.colorDark} strokeWidth={10} strokeLinecap="round" opacity={0.9} />
-        <path d={d} fill="none" stroke={glaze.color} strokeWidth={8} strokeLinecap="round" />
+      <g>
         <path
           d={d}
+          pathLength={1}
+          fill="none"
+          stroke={glaze.colorDark}
+          strokeWidth={10}
+          strokeLinecap="round"
+          opacity={0.9}
+          className="glaze-line"
+        />
+        <path
+          d={d}
+          pathLength={1}
+          fill="none"
+          stroke={glaze.color}
+          strokeWidth={8}
+          strokeLinecap="round"
+          className="glaze-line"
+          style={{ animationDelay: "0.05s" }}
+        />
+        <path
+          d={d}
+          pathLength={1}
           fill="none"
           stroke={lighten(glaze.color, 0.45)}
           strokeWidth={2}
           strokeOpacity={0.5}
           strokeLinecap="round"
           transform="translate(0, -1.6)"
+          className="glaze-line"
+          style={{ animationDelay: "0.1s" }}
         />
+        {drips}
       </g>
     );
   }, [glaze, seedBase, cx, cy, rx, ry]);
@@ -148,7 +161,7 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
   const rand = useMemo(() => seededRandom(seedBase + "-extras"), [seedBase]);
 
   const pannaLayer = hasPanna ? (
-    <g className="topping-enter">
+    <g className="panna-pop">
       <defs>
         <radialGradient id="panna-grad" cx="32%" cy="26%" r="80%">
           <stop offset="0%" stopColor="#FFFFFF" />
@@ -197,7 +210,7 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
   const capTopY = hasPanna ? pannaTopY - 36 : cy - ry * 0.7;
 
   const amarenaLayer = hasAmarena ? (
-    <g className="topping-enter">
+    <g className="cherry-drop">
       <defs>
         <radialGradient id="amarena-grad" cx="34%" cy="30%" r="75%">
           <stop offset="0%" stopColor="#D8546A" />
@@ -213,14 +226,13 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
   ) : null;
 
   const cialdaLayer = hasCialda ? (
-    <g
-      className="topping-enter"
-      transform={`translate(${cx + rx * 0.5} ${cy - ry * 0.5}) rotate(-24)`}
-    >
-      <rect x={-6} y={-58} width={12} height={64} rx={3} fill="#D9A45C" stroke="#A9743A" strokeWidth={1.2} />
-      {[-40, -24, -8, 8, 24].map((y, i) => (
-        <line key={i} x1={-5} y1={y} x2={5} y2={y + 6} stroke="#A9743A" strokeWidth={1} opacity={0.6} />
-      ))}
+    <g transform={`translate(${cx + rx * 0.68} ${cy - ry * 0.22}) rotate(-40)`}>
+      <g className="cialda-in">
+        <rect x={-6} y={-56} width={12} height={62} rx={3} fill="#D9A45C" stroke="#A9743A" strokeWidth={1.2} />
+        {[-38, -22, -6, 10, 26].map((y, i) => (
+          <line key={i} x1={-5} y1={y} x2={5} y2={y + 6} stroke="#A9743A" strokeWidth={1} opacity={0.6} />
+        ))}
+      </g>
     </g>
   ) : null;
 

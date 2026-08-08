@@ -36,8 +36,17 @@ export default function GelatoBase({ baseId, rimY }: GelatoBaseProps) {
           <clipPath id="cup-clip">
             <path d={cupPath} />
           </clipPath>
+          <filter id="f-paper-grain" x="-15%" y="-15%" width="130%" height="130%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.2" numOctaves="2" seed="11" result="noise" />
+            <feGaussianBlur in="noise" stdDeviation="0.3" result="noiseSmooth" />
+            <feDiffuseLighting in="noiseSmooth" surfaceScale="1.1" diffuseConstant="1" lightingColor="#fff6e6" result="diff">
+              <feDistantLight azimuth="235" elevation="62" />
+            </feDiffuseLighting>
+            <feComposite in="diff" in2="SourceGraphic" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="shaded" />
+            <feComposite in="shaded" in2="SourceAlpha" operator="in" />
+          </filter>
         </defs>
-        <path d={cupPath} fill="url(#cup-grad)" stroke="#9C7143" strokeWidth={1.4} />
+        <path d={cupPath} fill="url(#cup-grad)" stroke="#9C7143" strokeWidth={1.4} filter="url(#f-paper-grain)" />
         <g clipPath="url(#cup-clip)">
           {[0.28, 0.52, 0.76].map((t, i) => {
             const y = topY + (bottomY - topY) * t;
@@ -150,8 +159,21 @@ export default function GelatoBase({ baseId, rimY }: GelatoBaseProps) {
         <clipPath id="cone-clip">
           <path d={conePath} />
         </clipPath>
+        <filter id="f-cone-toast" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.028 0.045" numOctaves="2" seed="23" result="noise" />
+          <feGaussianBlur in="noise" stdDeviation="0.5" result="noiseSmooth" />
+          <feDiffuseLighting in="noiseSmooth" surfaceScale="2.1" diffuseConstant="1" lightingColor="#fff1cc" result="diff">
+            <feDistantLight azimuth="235" elevation="55" />
+          </feDiffuseLighting>
+          <feSpecularLighting in="noiseSmooth" surfaceScale="2.1" specularConstant="0.28" specularExponent="12" lightingColor="#fff6e2" result="spec">
+            <feDistantLight azimuth="235" elevation="55" />
+          </feSpecularLighting>
+          <feComposite in="diff" in2="SourceGraphic" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="shaded" />
+          <feComposite in="spec" in2="shaded" operator="arithmetic" k1="0" k2="0.6" k3="1" k4="0" result="lit" />
+          <feComposite in="lit" in2="SourceAlpha" operator="in" />
+        </filter>
       </defs>
-      <path d={conePath} fill="url(#cone-grad)" stroke="#8C5A24" strokeWidth={1.4} />
+      <path d={conePath} fill="url(#cone-grad)" stroke="#8C5A24" strokeWidth={1.4} filter="url(#f-cone-toast)" />
       <g clipPath="url(#cone-clip)">
         <g stroke="#7A4A1E" strokeOpacity={0.22} strokeWidth={1.1}>
           {hatchLines}
