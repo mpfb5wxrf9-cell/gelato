@@ -58,10 +58,15 @@ export function ChatPage() {
         </button>
         {conversation?.peer && (
           <>
-            <Avatar name={conversation.peer.displayName} color={conversation.peer.avatarColor} size={38} />
+            <Avatar
+              name={conversation.peer.nickname}
+              color={conversation.peer.avatarColor}
+              imageUrl={conversation.peer.avatarUrl}
+              size={38}
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 15.5, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {conversation.peer.displayName}
+                {conversation.peer.nickname}
               </div>
               <div
                 style={{
@@ -90,7 +95,7 @@ export function ChatPage() {
 
         {!loading && messages.length === 0 && (
           <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '40px 24px', fontSize: 13.5 }}>
-            Inizia la conversazione. Solo tu e {conversation?.peer?.displayName || 'il tuo contatto'} potete leggere
+            Inizia la conversazione. Solo tu e {conversation?.peer?.nickname || 'il tuo contatto'} potete leggere
             questi messaggi.
           </div>
         )}

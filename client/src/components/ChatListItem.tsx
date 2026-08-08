@@ -32,10 +32,15 @@ export function ChatListItem({ conversation, preview }: Props) {
         textAlign: 'left',
       }}
     >
-      <Avatar name={conversation.peer.displayName} color={conversation.peer.avatarColor} size={52} />
+      <Avatar
+        name={conversation.peer.nickname}
+        color={conversation.peer.avatarColor}
+        imageUrl={conversation.peer.avatarUrl}
+        size={52}
+      />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ fontWeight: 600, fontSize: 16 }}>{conversation.peer.displayName}</span>
+          <span style={{ fontWeight: 600, fontSize: 16 }}>{conversation.peer.nickname}</span>
           {conversation.lastMessage && (
             <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', flexShrink: 0 }}>
               {formatTime(conversation.lastMessage.createdAt)}

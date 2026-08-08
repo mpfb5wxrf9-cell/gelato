@@ -3,6 +3,7 @@ import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { conversationKey, sortedPair } from '../lib/conversation.js';
 import { publicUser } from './auth.js';
+import { normalizePhone } from '../lib/phone.js';
 
 const router = Router();
 
@@ -44,11 +45,11 @@ router.get('/', requireAuth, (req, res) => {
 });
 
 router.post('/', requireAuth, (req, res) => {
-  const { username } = req.body || {};
-  if (!username) return res.status(400).json({ error: 'Username richiesto.' });
+  const phone = normalizePhone(req.body?.phone);
+  if (!phone) return res.status(400).json({ error: 'Numero di telefono non valido.' });
 
-  const peer = db.prepare('SELECT * FROM users WHERE username = ?').get(username.toLowerCase());
-  if (!peer) return res.status(404).json({ error: 'Utente non trovato.' });
+  const peer = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
+  if (!peer) return res.status(404).json({ error: 'Nessun utente Aria con questo numero.' });
   if (peer.id === req.user.sub) return res.status(400).json({ error: 'Non puoi avviare una chat con te stesso.' });
 
   const id = conversationKey(req.user.sub, peer.id);

@@ -1,9 +1,11 @@
 export interface PublicUser {
   id: string;
-  username: string;
-  displayName: string;
+  phone: string;
+  nickname: string;
+  bio: string;
   publicKey: JsonWebKey;
   avatarColor: string;
+  avatarUrl: string | null;
 }
 
 export interface ConversationSummary {

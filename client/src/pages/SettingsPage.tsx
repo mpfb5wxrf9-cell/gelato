@@ -1,19 +1,62 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
+import { fileToSquareJpegBase64 } from '../lib/image';
+import { formatDisplay } from '../lib/phone';
 import { Avatar } from '../components/Avatar';
 import { TabBar } from '../components/TabBar';
-import { ShieldIcon, LogoutIcon, LockIcon } from '../components/Icons';
+import { ShieldIcon, LogoutIcon, LockIcon, CameraIcon } from '../components/Icons';
 import { fingerprint } from '../lib/crypto';
 
 export function SettingsPage() {
-  const { user, identity, logout } = useAuth();
+  const { user, identity, logout, setUser } = useAuth();
   const [fp, setFp] = useState('');
+  const [nickname, setNickname] = useState(user?.nickname || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (identity) fingerprint(identity.publicJwk).then(setFp);
   }, [identity]);
 
+  useEffect(() => {
+    setNickname(user?.nickname || '');
+    setBio(user?.bio || '');
+  }, [user?.nickname, user?.bio]);
+
   if (!user) return null;
+
+  const dirty = nickname.trim() !== user.nickname || bio.trim() !== user.bio;
+
+  const save = async () => {
+    if (!dirty || !nickname.trim()) return;
+    setSaving(true);
+    try {
+      const { user: updated } = await api.updateProfile({ nickname: nickname.trim(), bio: bio.trim() });
+      setUser(updated);
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 1600);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onPickAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarBusy(true);
+    try {
+      const base64 = await fileToSquareJpegBase64(file);
+      const { user: updated } = await api.uploadAvatar(base64);
+      setUser(updated);
+    } finally {
+      setAvatarBusy(false);
+      e.target.value = '';
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -26,16 +69,81 @@ export function SettingsPage() {
           className="glass"
           style={{
             borderRadius: 'var(--radius-lg)',
-            padding: 20,
+            padding: 22,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 10,
+            gap: 14,
           }}
         >
-          <Avatar name={user.displayName} color={user.avatarColor} size={72} />
-          <div style={{ fontSize: 19, fontWeight: 700 }}>{user.displayName}</div>
-          <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>@{user.username}</div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="press"
+            style={{ position: 'relative' }}
+            aria-label="Cambia foto profilo"
+          >
+            <Avatar name={user.nickname} color={user.avatarColor} imageUrl={user.avatarUrl} size={88} />
+            <span
+              style={{
+                position: 'absolute',
+                bottom: -2,
+                right: -2,
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: 'var(--accent-gradient)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2.5px solid var(--bg)',
+                opacity: avatarBusy ? 0.6 : 1,
+              }}
+            >
+              <CameraIcon width={14} height={14} stroke="#fff" />
+            </span>
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onPickAvatar} />
+
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', paddingLeft: 4 }}>Nome</span>
+              <div className="field-box" style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '10px 13px' }}>
+                <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={30} style={{ textAlign: 'center', fontWeight: 600 }} />
+              </div>
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', paddingLeft: 4 }}>Bio</span>
+              <div className="field-box" style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '10px 13px' }}>
+                <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={140} placeholder="Disponibile su Aria" style={{ textAlign: 'center' }} />
+              </div>
+            </label>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>{formatDisplay(user.phone)}</div>
+
+            {dirty && (
+              <button
+                onClick={save}
+                disabled={saving || !nickname.trim()}
+                className="press"
+                style={{
+                  background: 'var(--accent-gradient)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  padding: '10px 0',
+                  borderRadius: 12,
+                  opacity: saving ? 0.7 : 1,
+                }}
+              >
+                {saving ? 'Salvataggio…' : 'Salva modifiche'}
+              </button>
+            )}
+            {savedFlash && (
+              <div style={{ fontSize: 12.5, color: 'var(--success)', textAlign: 'center', fontWeight: 600 }}>
+                Profilo aggiornato
+              </div>
+            )}
+          </div>
         </div>
 
         <Section title="Sicurezza">

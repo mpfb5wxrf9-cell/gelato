@@ -36,19 +36,42 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  register: (username: string, password: string, displayName: string, publicKey: JsonWebKey) =>
-    request<{ token: string; user: PublicUser }>('/auth/register', {
+  requestOtp: (phone: string) =>
+    request<{ sent: boolean; devCode: string | null; phone: string }>('/auth/otp/request', {
       method: 'POST',
-      body: JSON.stringify({ username, password, displayName, publicKey }),
+      body: JSON.stringify({ phone }),
     }),
 
-  login: (username: string, password: string) =>
-    request<{ token: string; user: PublicUser }>('/auth/login', {
+  verifyOtp: (phone: string, code: string) =>
+    request<
+      | { isNewUser: false; token: string; user: PublicUser }
+      | { isNewUser: true; registrationToken: string }
+    >('/auth/otp/verify', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ phone, code }),
+    }),
+
+  register: (registrationToken: string, nickname: string, bio: string, publicKey: JsonWebKey) =>
+    request<{ token: string; user: PublicUser }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ registrationToken, nickname, bio, publicKey }),
     }),
 
   me: () => request<{ user: PublicUser }>('/users/me'),
+
+  updateProfile: (fields: { nickname?: string; bio?: string }) =>
+    request<{ user: PublicUser }>('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(fields),
+    }),
+
+  uploadAvatar: (imageBase64: string) =>
+    request<{ user: PublicUser }>('/users/me/avatar', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64 }),
+    }),
+
+  removeAvatar: () => request<{ user: PublicUser }>('/users/me/avatar', { method: 'DELETE' }),
 
   updatePublicKey: (publicKey: JsonWebKey) =>
     request<{ user: PublicUser }>('/users/me/public-key', {
@@ -58,14 +81,22 @@ export const api = {
 
   searchUsers: (q: string) => request<{ users: PublicUser[] }>(`/users/search?q=${encodeURIComponent(q)}`),
 
+  getUserByPhone: (phone: string) => request<{ user: PublicUser }>(`/users/by-phone/${encodeURIComponent(phone)}`),
+
+  syncContacts: (phones: string[]) =>
+    request<{ users: PublicUser[] }>('/users/contacts/sync', {
+      method: 'POST',
+      body: JSON.stringify({ phones }),
+    }),
+
   listConversations: () => request<{ conversations: ConversationSummary[] }>('/conversations'),
 
   getConversation: (id: string) => request<{ conversation: ConversationSummary }>(`/conversations/${id}`),
 
-  createConversation: (username: string) =>
+  createConversation: (phone: string) =>
     request<{ conversation: ConversationSummary }>('/conversations', {
       method: 'POST',
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ phone }),
     }),
 
   getMessages: (conversationId: string, before?: number) =>

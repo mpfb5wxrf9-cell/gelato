@@ -12,8 +12,11 @@ interface AuthContextValue {
   realtime: RealtimeClient | null;
   loading: boolean;
   error: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string, displayName: string) => Promise<void>;
+  pendingPhone: string | null;
+  requestOtp: (phone: string) => Promise<{ devCode: string | null }>;
+  verifyOtp: (phone: string, code: string) => Promise<{ isNewUser: boolean }>;
+  completeRegistration: (nickname: string, bio: string) => Promise<void>;
+  setUser: (user: PublicUser) => void;
   logout: () => void;
   clearError: () => void;
 }
@@ -36,10 +39,12 @@ async function syncIdentity(user: PublicUser): Promise<{ identity: Identity; use
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<PublicUser | null>(null);
+  const [user, setUserState] = useState<PublicUser | null>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPhone, setPendingPhone] = useState<string | null>(null);
+  const registrationTokenRef = useRef<string | null>(null);
   const realtimeRef = useRef<RealtimeClient | null>(null);
   const [realtimeVersion, setRealtimeVersion] = useState(0);
 
@@ -61,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { user: me } = await api.me();
         const synced = await syncIdentity(me);
-        setUser(synced.user);
+        setUserState(synced.user);
         setIdentity(synced.identity);
         bootRealtime(token);
       } catch {
@@ -77,65 +82,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = useCallback(
-    async (username: string, password: string) => {
-      setError(null);
-      try {
-        const { token, user: loggedInUser } = await api.login(username, password);
-        setToken(token);
-        const synced = await syncIdentity(loggedInUser);
-        setUser(synced.user);
-        setIdentity(synced.identity);
-        bootRealtime(token);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Accesso non riuscito.');
-        throw err;
-      }
-    },
-    [bootRealtime]
-  );
+  const requestOtp = useCallback(async (phone: string) => {
+    setError(null);
+    try {
+      const { devCode } = await api.requestOtp(phone);
+      setPendingPhone(phone);
+      return { devCode };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invio del codice non riuscito.');
+      throw err;
+    }
+  }, []);
 
-  const register = useCallback(
-    async (username: string, password: string, displayName: string) => {
+  const verifyOtp = useCallback(async (phone: string, code: string) => {
+    setError(null);
+    try {
+      const result = await api.verifyOtp(phone, code);
+      if (!result.isNewUser) {
+        setToken(result.token);
+        const synced = await syncIdentity(result.user);
+        setUserState(synced.user);
+        setIdentity(synced.identity);
+        bootRealtime(result.token);
+        return { isNewUser: false };
+      }
+      registrationTokenRef.current = result.registrationToken;
+      return { isNewUser: true };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Codice non valido.');
+      throw err;
+    }
+  }, [bootRealtime]);
+
+  const completeRegistration = useCallback(
+    async (nickname: string, bio: string) => {
       setError(null);
+      const registrationToken = registrationTokenRef.current;
+      const phone = pendingPhone;
+      if (!registrationToken || !phone) {
+        throw new Error('Sessione di registrazione scaduta. Ricomincia dal numero di telefono.');
+      }
       try {
-        // La coppia di chiavi viene generata localmente PRIMA di contattare il
-        // server: la chiave privata non viene mai trasmessa.
-        const tempId = `pending:${username}`;
+        const tempId = `pending:${phone}`;
         const identityDraft = await getOrCreateIdentity(tempId);
-        const { token, user: newUser } = await api.register(
-          username,
-          password,
-          displayName,
-          identityDraft.publicJwk
-        );
+        const { token, user: newUser } = await api.register(registrationToken, nickname, bio, identityDraft.publicJwk);
         setToken(token);
         // Ri-ancoriamo l'identità al vero userId assegnato dal server.
         const realIdentity = await getOrCreateIdentity(newUser.id);
         if (JSON.stringify(realIdentity.publicJwk) !== JSON.stringify(identityDraft.publicJwk)) {
-          // caso raro: id già esistente localmente, riallineiamo il server
           await api.updatePublicKey(realIdentity.publicJwk);
         }
-        setUser(newUser);
+        registrationTokenRef.current = null;
+        setUserState(newUser);
         setIdentity(realIdentity);
         bootRealtime(token);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Registrazione non riuscita.');
+        setError(err instanceof Error ? err.message : 'Creazione del profilo non riuscita.');
         throw err;
       }
     },
-    [bootRealtime]
+    [bootRealtime, pendingPhone]
   );
 
   const logout = useCallback(() => {
     setToken(null);
     realtimeRef.current?.close();
     realtimeRef.current = null;
-    setUser(null);
+    registrationTokenRef.current = null;
+    setPendingPhone(null);
+    setUserState(null);
     setIdentity(null);
   }, []);
 
   const clearError = useCallback(() => setError(null), []);
+  const setUser = useCallback((u: PublicUser) => setUserState(u), []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -144,14 +164,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       realtime: realtimeRef.current,
       loading,
       error,
-      login,
-      register,
+      pendingPhone,
+      requestOtp,
+      verifyOtp,
+      completeRegistration,
+      setUser,
       logout,
       clearError,
     }),
     // realtimeVersion forza il refresh del riferimento quando cambia il client WS
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, identity, loading, error, login, register, logout, clearError, realtimeVersion]
+    [user, identity, loading, error, pendingPhone, requestOtp, verifyOtp, completeRegistration, setUser, logout, clearError, realtimeVersion]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

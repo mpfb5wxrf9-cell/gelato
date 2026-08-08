@@ -53,6 +53,10 @@ export default defineConfig({
         target: 'ws://localhost:4000',
         ws: true,
       },
+      '/avatars': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
     },
   },
 });

@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { AuthPage } from './pages/AuthPage';
+import { PhoneEntryPage } from './pages/PhoneEntryPage';
+import { OtpVerifyPage } from './pages/OtpVerifyPage';
+import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { ChatsPage } from './pages/ChatsPage';
 import { ChatPage } from './pages/ChatPage';
 import { NewChatPage } from './pages/NewChatPage';
@@ -42,7 +44,12 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route path="/login" element={loading ? <Splash /> : user ? <Navigate to="/chats" replace /> : <AuthPage />} />
+        <Route
+          path="/login"
+          element={loading ? <Splash /> : user ? <Navigate to="/chats" replace /> : <PhoneEntryPage />}
+        />
+        <Route path="/verify-otp" element={user ? <Navigate to="/chats" replace /> : <OtpVerifyPage />} />
+        <Route path="/profile-setup" element={user ? <Navigate to="/chats" replace /> : <ProfileSetupPage />} />
         <Route
           path="/chats"
           element={

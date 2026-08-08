@@ -84,6 +84,22 @@ export const ShieldIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const CameraIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}>
+    <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z" />
+    <circle cx="12" cy="13" r="3.4" />
+  </svg>
+);
+
+export const ContactsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}>
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M3.5 19c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5" />
+    <path d="M16 4.5c1.7.4 3 2 3 3.9s-1.3 3.5-3 3.9" />
+    <path d="M20.5 19c0-2.7-1.8-4.8-4-5.3" />
+  </svg>
+);
+
 export const InstallIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}>
     <path d="M12 3v12" />

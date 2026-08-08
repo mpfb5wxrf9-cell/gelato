@@ -3,9 +3,10 @@ interface AvatarProps {
   color: string;
   size?: number;
   online?: boolean;
+  imageUrl?: string | null;
 }
 
-export function Avatar({ name, color, size = 46, online }: AvatarProps) {
+export function Avatar({ name, color, size = 46, online, imageUrl }: AvatarProps) {
   const initials = name
     .trim()
     .split(/\s+/)
@@ -15,23 +16,38 @@ export function Avatar({ name, color, size = 46, online }: AvatarProps) {
 
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '32%',
-          background: `linear-gradient(150deg, ${color}, ${color}cc)`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: size * 0.38,
-          boxShadow: `0 4px 14px ${color}55`,
-        }}
-      >
-        {initials}
-      </div>
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={name}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: '32%',
+            objectFit: 'cover',
+            boxShadow: `0 4px 14px ${color}40`,
+            display: 'block',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: '32%',
+            background: `linear-gradient(150deg, ${color}, ${color}cc)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: size * 0.38,
+            boxShadow: `0 4px 14px ${color}55`,
+          }}
+        >
+          {initials}
+        </div>
+      )}
       {online && (
         <span
           style={{

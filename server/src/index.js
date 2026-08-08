@@ -10,12 +10,14 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import conversationRoutes from './routes/conversations.js';
 import { attachWebSocketServer } from './ws.js';
+import { avatarsDir } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '6mb' }));
+app.use('/avatars', express.static(avatarsDir, { maxAge: '7d' }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 app.use('/api/auth', authRoutes);
