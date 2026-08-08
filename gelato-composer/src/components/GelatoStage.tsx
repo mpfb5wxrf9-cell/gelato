@@ -113,7 +113,7 @@ export default function GelatoStage({ baseId, flavors, decorations, glaze, extra
           ))}
           {flavors.length > 0 && (
             <Toppings
-              geometry={topGeometry}
+              geometries={geometries}
               decorations={decorations}
               glaze={glaze}
               extras={extras}
