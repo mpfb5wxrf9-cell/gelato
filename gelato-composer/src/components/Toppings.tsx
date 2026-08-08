@@ -155,6 +155,19 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
           <stop offset="55%" stopColor="#FFFCF4" />
           <stop offset="100%" stopColor="#E9DFC7" />
         </radialGradient>
+        <filter id="f-panna-cream" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.09 0.16" numOctaves="2" seed="4" result="noise" />
+          <feGaussianBlur in="noise" stdDeviation="0.6" result="noiseSmooth" />
+          <feDiffuseLighting in="noiseSmooth" surfaceScale="1.8" diffuseConstant="1" lightingColor="#fffdf7" result="diff">
+            <feDistantLight azimuth="235" elevation="58" />
+          </feDiffuseLighting>
+          <feSpecularLighting in="noiseSmooth" surfaceScale="1.8" specularConstant="0.65" specularExponent="22" lightingColor="#ffffff" result="spec">
+            <feDistantLight azimuth="235" elevation="58" />
+          </feSpecularLighting>
+          <feComposite in="diff" in2="SourceGraphic" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="shaded" />
+          <feComposite in="spec" in2="shaded" operator="arithmetic" k1="0" k2="0.9" k3="1" k4="0" result="lit" />
+          <feComposite in="lit" in2="SourceAlpha" operator="in" />
+        </filter>
       </defs>
       <ellipse
         cx={cx}
@@ -165,9 +178,11 @@ export default function Toppings({ geometry, decorations, glaze, extras, seedBas
         opacity={0.16}
         filter="url(#f-contact-blur)"
       />
-      <path d={blobPath(cx, pannaTopY + 14, 34, 22, rand, 9, 0.08)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={1} strokeOpacity={0.5} />
-      <path d={blobPath(cx - 2, pannaTopY - 8, 24, 17, rand, 9, 0.09)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={0.8} strokeOpacity={0.5} />
-      <path d={blobPath(cx + 1, pannaTopY - 24, 14, 11, rand, 8, 0.1)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={0.6} strokeOpacity={0.5} />
+      <g filter="url(#f-panna-cream)">
+        <path d={blobPath(cx, pannaTopY + 14, 34, 22, rand, 9, 0.08)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={1} strokeOpacity={0.5} />
+        <path d={blobPath(cx - 2, pannaTopY - 8, 24, 17, rand, 9, 0.09)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={0.8} strokeOpacity={0.5} />
+        <path d={blobPath(cx + 1, pannaTopY - 24, 14, 11, rand, 8, 0.1)} fill="url(#panna-grad)" stroke="#D8CBA9" strokeWidth={0.6} strokeOpacity={0.5} />
+      </g>
       <path
         d={`M ${cx - 10} ${pannaTopY - 24} Q ${cx} ${pannaTopY - 30} ${cx + 8} ${pannaTopY - 22}`}
         fill="none"
