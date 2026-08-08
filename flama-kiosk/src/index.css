@@ -191,7 +191,7 @@ button {
   display: flex;
   justify-content: center;
   gap: 18px;
-  padding: 0 24px clamp(24px, 4vh, 40px);
+  padding: clamp(22px, 4vh, 36px) 24px clamp(24px, 4vh, 40px);
   flex-wrap: wrap;
 }
 
