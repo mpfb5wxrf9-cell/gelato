@@ -1,8 +1,8 @@
 import { useMemo, type ReactElement } from "react";
 import type { Flavor } from "../data/options";
 import { blobPath, scoopPath } from "../lib/blob";
-import { hashSeed, seededRandom } from "../lib/rng";
-import { darken, lighten } from "../lib/color";
+import { seededRandom } from "../lib/rng";
+import { darken } from "../lib/color";
 
 interface ScoopGeometry {
   cx: number;
@@ -27,9 +27,7 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
   );
   const gradId = `scoop-grad-${seed}`;
   const clipId = `scoop-clip-${seed}`;
-  const creamId = `scoop-cream-${seed}`;
   const deepShade = useMemo(() => darken(flavor.shade, 0.32), [flavor.shade]);
-  const turbSeed = useMemo(() => hashSeed(seed) % 90, [seed]);
 
   const glossPath = useMemo(
     () =>
@@ -44,15 +42,6 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
       ),
     [cx, cy, rx, ry, seed]
   );
-
-  const ripple = useMemo(() => {
-    const r3 = seededRandom(seed + "-ripple");
-    const y0 = cy - ry * (0.12 + r3() * 0.14);
-    const bow = ry * (0.22 + r3() * 0.12) * (r3() > 0.5 ? 1 : -1);
-    const x0 = cx - rx * 0.68;
-    const x1 = cx + rx * 0.7;
-    return `M ${x0} ${y0} Q ${cx} ${y0 + bow} ${x1} ${y0 - bow * 0.35}`;
-  }, [cx, cy, rx, ry, seed]);
 
   const texture = useMemo(() => {
     const items: ReactElement[] = [];
@@ -145,26 +134,12 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
       <defs>
         <radialGradient id={gradId} cx="33%" cy="24%" r="80%">
           <stop offset="0%" stopColor={flavor.highlight} />
-          <stop offset="30%" stopColor={flavor.main} />
-          <stop offset="72%" stopColor={flavor.shade} />
-          <stop offset="100%" stopColor={deepShade} />
+          <stop offset="45%" stopColor={flavor.main} />
+          <stop offset="100%" stopColor={flavor.shade} />
         </radialGradient>
         <clipPath id={clipId}>
           <path d={path} />
         </clipPath>
-        <filter id={creamId} x="-20%" y="-20%" width="140%" height="140%" primitiveUnits="userSpaceOnUse">
-          <feTurbulence type="fractalNoise" baseFrequency="0.055 0.07" numOctaves="3" seed={turbSeed} result="noise" />
-          <feGaussianBlur in="noise" stdDeviation="1.3" result="noiseSmooth" />
-          <feDiffuseLighting in="noiseSmooth" surfaceScale="3.4" diffuseConstant="1.05" lightingColor="#fff9ee" result="diff">
-            <feDistantLight azimuth="235" elevation="55" />
-          </feDiffuseLighting>
-          <feSpecularLighting in="noiseSmooth" surfaceScale="3.4" specularConstant="0.45" specularExponent="17" lightingColor="#ffffff" result="spec">
-            <feDistantLight azimuth="235" elevation="55" />
-          </feSpecularLighting>
-          <feComposite in="diff" in2="SourceGraphic" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="shaded" />
-          <feComposite in="spec" in2="shaded" operator="arithmetic" k1="0" k2="0.8" k3="1" k4="0" result="lit" />
-          <feComposite in="lit" in2="SourceAlpha" operator="in" />
-        </filter>
       </defs>
       <ellipse
         cx={cx}
@@ -175,40 +150,10 @@ export default function Scoop({ flavor, geometry, seed, delay }: ScoopProps) {
         opacity={0.28}
         filter="url(#f-contact-blur)"
       />
-      <path
-        d={path}
-        fill={`url(#${gradId})`}
-        stroke={deepShade}
-        strokeWidth={1}
-        strokeOpacity={0.55}
-        filter={`url(#${creamId})`}
-      />
+      <path d={path} fill={`url(#${gradId})`} stroke={deepShade} strokeWidth={1.4} strokeOpacity={0.6} />
       <g clipPath={`url(#${clipId})`}>
         {texture}
-        <path
-          d={ripple}
-          fill="none"
-          stroke={deepShade}
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          opacity={0.22}
-        />
-        <path
-          d={ripple}
-          fill="none"
-          stroke={lighten(flavor.highlight, 0.3)}
-          strokeWidth={1.1}
-          strokeLinecap="round"
-          opacity={0.35}
-          transform="translate(0, -1.6)"
-        />
-        <path
-          d={glossPath}
-          fill="#ffffff"
-          opacity={0.32}
-          filter="url(#f-gloss-blur)"
-          style={{ mixBlendMode: "screen" }}
-        />
+        <path d={glossPath} fill="#ffffff" opacity={0.4} />
       </g>
     </g>
   );
