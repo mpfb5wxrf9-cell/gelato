@@ -12,7 +12,8 @@ export function describeLine(item: MenuItem, config: CartLineConfig): string {
   }
 
   if (config.flavorId) {
-    const flavor = DRINK_FLAVORS.find((f) => f.id === config.flavorId);
+    const flavorOptions = config.isMenu ? DRINK_FLAVORS : item.flavorOptions ?? DRINK_FLAVORS;
+    const flavor = flavorOptions.find((f) => f.id === config.flavorId);
     if (flavor) parts.push(flavor.label);
   }
 

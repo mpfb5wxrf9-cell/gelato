@@ -23,7 +23,9 @@ export default function CustomizeModal({ item, startAsMenu, onClose, onAdd }: Cu
   const [quantity, setQuantity] = useState(1);
 
   const price = unitPrice(item, config);
-  const flavor = DRINK_FLAVORS.find((f) => f.id === config.flavorId);
+  const flavorOptions = config.isMenu ? DRINK_FLAVORS : item.flavorOptions ?? DRINK_FLAVORS;
+  const flavorLabel = config.isMenu ? "Bibita" : item.flavorLabel ?? "Bibita";
+  const flavor = flavorOptions.find((f) => f.id === config.flavorId);
 
   const toggleMenu = (isMenu: boolean) => {
     setConfig((c) => ({ ...c, isMenu, sizeId: isMenu && !item.sizes ? c.sizeId ?? "m" : c.sizeId }));
@@ -129,9 +131,9 @@ export default function CustomizeModal({ item, startAsMenu, onClose, onAdd }: Cu
 
           {needsFlavor && (
             <div className="modal-section">
-              <h3>Bibita</h3>
+              <h3>{flavorLabel}</h3>
               <div className="chip-row">
-                {DRINK_FLAVORS.map((f) => (
+                {flavorOptions.map((f) => (
                   <button
                     key={f.id}
                     type="button"

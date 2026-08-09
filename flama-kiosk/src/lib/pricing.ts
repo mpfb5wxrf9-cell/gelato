@@ -35,10 +35,11 @@ export function formatPrice(value: number): string {
 
 export function defaultConfig(item: MenuItem): CartLineConfig {
   const defaultSize = item.sizes ? item.sizes.find((s) => s.id === "m")?.id ?? item.sizes[0].id : null;
+  const defaultFlavor = item.flavorOptions ? item.flavorOptions[0].id : DRINK_FLAVORS[0].id;
   return {
     isMenu: false,
     sizeId: defaultSize,
-    flavorId: DRINK_FLAVORS[0].id,
+    flavorId: defaultFlavor,
     sauceId: item.isNuggets ? "ketchup" : null,
     removedIngredients: [],
     extraIds: [],

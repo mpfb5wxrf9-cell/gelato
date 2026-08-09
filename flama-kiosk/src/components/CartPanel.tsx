@@ -30,7 +30,8 @@ export default function CartPanel({ order, className }: CartPanelProps) {
       ) : (
         <div className="cart-lines">
           {cart.map((line) => {
-            const flavor = line.config.flavorId ? DRINK_FLAVORS.find((f) => f.id === line.config.flavorId) : undefined;
+            const flavorOptions = line.config.isMenu ? DRINK_FLAVORS : line.item.flavorOptions ?? DRINK_FLAVORS;
+            const flavor = line.config.flavorId ? flavorOptions.find((f) => f.id === line.config.flavorId) : undefined;
             return (
               <div className="cart-line" key={line.lineId}>
                 <FoodArt art={line.item.art} liquidColor={flavor?.liquidColor} lidColor={flavor?.lidColor} className="cart-line-art" />

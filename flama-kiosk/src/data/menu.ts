@@ -16,6 +16,12 @@ export const DRINK_FLAVORS: FlavorOption[] = [
   { id: "acqua", label: "Acqua naturale", liquidColor: "#BFE0EA", lidColor: "#4E9CB5" },
 ];
 
+export const MILKSHAKE_FLAVORS: FlavorOption[] = [
+  { id: "vaniglia", label: "Vaniglia", liquidColor: "#F5EAD1", lidColor: "#E8D7A8" },
+  { id: "fragola", label: "Fragola", liquidColor: "#E85C7A", lidColor: "#E85C7A" },
+  { id: "cioccolato", label: "Cioccolato", liquidColor: "#5C3A24", lidColor: "#5C3A24" },
+];
+
 export const NUGGET_SAUCES: SauceOption[] = [
   { id: "bbq", label: "Barbecue", color: "#6B3416" },
   { id: "curry", label: "Curry", color: "#D8A324" },
@@ -239,6 +245,8 @@ export const MENU_ITEMS: MenuItem[] = [
     price: 3.6,
     art: { kind: "drink" },
     sizes: DRINK_SIZES,
+    flavorOptions: MILKSHAKE_FLAVORS,
+    flavorLabel: "Gusto",
   },
   {
     id: "sundae",

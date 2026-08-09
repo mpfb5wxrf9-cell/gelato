@@ -87,4 +87,6 @@ export interface MenuItem {
   extras?: Extra[];
   sizes?: SizeOption[];
   isNuggets?: boolean;
+  flavorOptions?: FlavorOption[];
+  flavorLabel?: string;
 }
