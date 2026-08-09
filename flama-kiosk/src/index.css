@@ -637,6 +637,11 @@ button {
   color: var(--ink);
 }
 
+.qty-stepper button svg {
+  width: 12px;
+  height: 12px;
+}
+
 .qty-stepper span {
   font-size: 12.5px;
   font-weight: 700;
@@ -789,6 +794,11 @@ button {
   justify-content: center;
 }
 
+.modal-close svg {
+  width: 14px;
+  height: 14px;
+}
+
 .modal-scroll {
   overflow-y: auto;
   padding: 4px 22px 12px;
@@ -866,6 +876,12 @@ button {
   border-color: var(--flame);
   background: var(--flame);
   color: #fff8ed;
+}
+
+.chip-option svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .chip-swatch {
@@ -1211,6 +1227,11 @@ button {
     display: flex;
     align-items: center;
     gap: 10px;
+  }
+  .cart-fab svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
   .cart-fab-badge {
     background: rgba(255, 248, 237, 0.25);
