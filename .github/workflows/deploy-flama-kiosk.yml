@@ -40,11 +40,16 @@ jobs:
         env:
           GITHUB_PAGES: "true"
 
+      - name: Stage Pages root
+        run: |
+          mkdir -p pages-root/flama-kiosk
+          cp -r flama-kiosk/dist/* pages-root/flama-kiosk/
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: flama-kiosk/dist
+          path: pages-root
 
   deploy:
     needs: build
