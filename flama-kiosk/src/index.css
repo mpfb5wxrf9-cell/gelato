@@ -44,10 +44,8 @@ button {
 }
 
 .kiosk-shell {
-  position: relative;
-  height: 100%;
-  min-height: 560px;
-  width: 100%;
+  position: fixed;
+  inset: 0;
   overflow: clip;
   background: var(--cream);
 }
@@ -723,7 +721,7 @@ button {
 
 .modal-sheet {
   width: min(640px, 100%);
-  max-height: 92vh;
+  max-height: calc(80dvh - env(safe-area-inset-top));
   background: var(--paper);
   border-radius: 26px 26px 0 0;
   display: flex;
@@ -738,7 +736,7 @@ button {
   }
   .modal-sheet {
     border-radius: 26px;
-    max-height: 88vh;
+    max-height: calc(82dvh - env(safe-area-inset-top));
   }
 }
 
